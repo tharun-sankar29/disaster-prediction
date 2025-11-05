@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_cors import CORS
-from models import predict_live_hurricane, predict_live_volcano
+from models import predict_live_hurricane, predict_live_volcano, train_hurricane_model, train_volcano_model
 from live_data_fetcher import LiveDataFetcher
 import logging
 import requests
@@ -401,4 +401,6 @@ def live_volcano_prediction():
 # ------------------ MAIN ENTRY ------------------
 
 if __name__ == '__main__':
+    train_hurricane_model()
+    train_volcano_model()
     app.run(debug=True)
