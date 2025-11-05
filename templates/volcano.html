@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volcanic Eruption (VEI)</title>
+    <style>
+        /* General Body and Page Layout */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #2c3e50;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 20px;
+            padding: 2.5rem;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Typography and Headings */
+        h1, h2 {
+            text-align: center;
+            color: #1a2b3c;
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #6a7c8c;
+            margin-bottom: 2rem;
+        }
+
+        /* Form Grid Layout */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Card and Panel Styles */
+        .card {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        /* Form Elements */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #4a6c8e;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #dcdfe4;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+        
+        /* Buttons and Links */
+        button {
+            background-color: #3498db;
+            color: #ffffff;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+            margin-top: 1.5rem;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .result-box {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: #eaf6ff;
+            color: #1a5276;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: none;
+        }
+
+        .data-source-toggle {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .toggle-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            background-color: #e0e6ed;
+            color: #4a5568;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-btn.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .toggle-btn:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+        
+        .toggle-btn:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+
+        .storm-select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            background-color: #fff;
+        }
+
+        .loading {
+            text-align: center;
+            color: #4a5568;
+            font-style: italic;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .input-section {
+            margin-bottom: 1.5rem;
+        }
+
+        /* Back Link */
+        .back-link {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 2rem;
+        }
+        
+        .back-link a {
+            color: #3498db;
+            font-size: 1.1rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .back-link a:hover {
+            color: #2980b9;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto">
+        <div class="back-link">
+            <a href="/">&larr; Back to Hub</a>
+        </div>
+        <div id="volcanoCard" class="card">
+            <h1>Volcanic Eruption (VEI)</h1>
+            <p>Enter the values to get a Volcanic Explosivity Index (VEI) prediction.</p>
+            <div class="data-source-toggle">
+                <button id="manualBtn" class="toggle-btn active" data-mode="manual">Manual Input</button>
+                <button id="liveBtn" class="toggle-btn" data-mode="live">Live Data</button>
+            </div>
+
+            <form id="volcano-form">
+                <div id="manual-input" class="form-grid">
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <input type="number" id="year" name="Year" value="2022" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="month">Month (1-12)</label>
+                        <input type="number" id="month" name="Month" value="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="day">Day (1-31)</label>
+                        <input type="number" id="day" name="Day" value="12" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="latitudeVolcano">Latitude (°)</label>
+                        <input type="number" step="0.1" id="latitudeVolcano" name="Latitude" value="35.4" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="longitudeVolcano">Longitude (°)</label>
+                        <input type="number" step="0.1" id="longitudeVolcano" name="Longitude" value="-120.3" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="elevation">Elevation (m)</label>
+                        <input type="number" id="elevation" name="Elevation (m)" value="1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <input type="text" id="country" name="Country" value="United States" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="type">Type</label>
+                        <input type="text" id="type" name="Type" value="Stratovolcano" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="agent">Agent</label>
+                        <input type="text" id="agent" name="Agent" value="Tectonic" required>
+                    </div>
+                </div>
+
+                <div id="liveInput" class="input-section" style="display: none;">
+                    <div class="input-group">
+                        <label for="volcanoSelect">Select Active Volcano:</label>
+                        <select id="volcanoSelect" class="storm-select">
+                            <option value="" disabled selected>Loading active volcanoes...</option>
+                        </select>
+                    </div>
+                    <div id="loadingVolcanoes" class="loading">Loading active volcanoes...</div>
+                    <button type="button" id="fetchLiveData" class="btn" disabled>Fetch Live Data</button>
+                </div>
+
+                <button type="submit" id="predictBtn" class="btn">Predict</button>
+            </form>
+            <div id="volcanoResult" class="result-box"></div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const manualInput = document.getElementById('manual-input');
+            const liveInput = document.getElementById('liveInput');
+            const manualBtn = document.getElementById('manualBtn');
+            const liveBtn = document.getElementById('liveBtn');
+            const predictBtn = document.getElementById('predictBtn');
+            const fetchLiveDataBtn = document.getElementById('fetchLiveData');
+            const volcanoSelect = document.getElementById('volcanoSelect');
+            const loadingVolcanoes = document.getElementById('loadingVolcanoes');
+            const form = document.getElementById('volcano-form');
+            const resultDiv = document.getElementById('volcanoResult');
+
+            // Toggle between manual and live input
+            function toggleInputMode(mode) {
+                if (mode === 'manual') {
+                    manualInput.style.display = 'grid';
+                    liveInput.style.display = 'none';
+                    manualBtn.classList.add('active');
+                    liveBtn.classList.remove('active');
+                    predictBtn.style.display = 'block';
+                } else {
+                    manualInput.style.display = 'none';
+                    liveInput.style.display = 'block';
+                    manualBtn.classList.remove('active');
+                    liveBtn.classList.add('active');
+                    predictBtn.style.display = 'none';
+                    
+                    // Load active volcanoes when switching to live mode
+                    loadActiveVolcanoes();
+                }
+            }
+
+            // Load active volcanoes
+            async function loadActiveVolcanoes() {
+                try {
+                    loadingVolcanoes.style.display = 'block';
+                    volcanoSelect.disabled = true;
+                    fetchLiveDataBtn.disabled = true;
+                    
+                    // This endpoint should be implemented in your backend
+                    const response = await fetch('/api/volcanoes/active');
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch active volcanoes');
+                    }
+                    
+                    const responseData = await response.json();
+                    const volcanoes = responseData.data || [];
+                    
+                    // Clear existing options
+                    volcanoSelect.innerHTML = '';
+                    
+                    if (volcanoes.length === 0) {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'No active volcanoes found';
+                        volcanoSelect.appendChild(option);
+                        return;
+                    }
+                    
+                    // Add default option
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.disabled = true;
+                    defaultOption.selected = true;
+                    defaultOption.textContent = 'Select a volcano';
+                    volcanoSelect.appendChild(defaultOption);
+                    
+                    // Add volcano options
+                    volcanoes.forEach(volcano => {
+                        const option = document.createElement('option');
+                        option.value = volcano.id;
+                        option.textContent = volcano.name || `Volcano ${volcano.id}`;
+                        option.dataset.data = JSON.stringify(volcano);
+                        volcanoSelect.appendChild(option);
+                    });
+                    
+                    volcanoSelect.disabled = false;
+                    fetchLiveDataBtn.disabled = false;
+                } catch (error) {
+                    console.error('Error loading active volcanoes:', error);
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Error loading volcanoes';
+                    volcanoSelect.innerHTML = '';
+                    volcanoSelect.appendChild(option);
+                } finally {
+                    loadingVolcanoes.style.display = 'none';
+                }
+            }
+
+            // Show result with appropriate styling
+            function showResult(message, isError = false) {
+                resultDiv.innerHTML = `<p>${message}</p>`;
+                resultDiv.className = 'result-box ' + (isError ? 'error' : 'success');
+                resultDiv.style.display = 'block';
+            }
+
+            // Event listeners
+            manualBtn.addEventListener('click', () => toggleInputMode('manual'));
+            liveBtn.addEventListener('click', () => toggleInputMode('live'));
+            
+            // Handle fetch live data button click
+            fetchLiveDataBtn.addEventListener('click', async () => {
+                const selectedOption = volcanoSelect.options[volcanoSelect.selectedIndex];
+                if (!selectedOption || !selectedOption.value) {
+                    showResult('Please select a volcano', true);
+                    return;
+                }
+                
+                try {
+                    const volcanoData = JSON.parse(selectedOption.dataset.data);
+                    
+                    // Update form fields with live data
+                    document.getElementById('year').value = new Date().getFullYear();
+                    document.getElementById('month').value = new Date().getMonth() + 1;
+                    document.getElementById('day').value = new Date().getDate();
+                    document.getElementById('latitudeVolcano').value = volcanoData.latitude || '';
+                    document.getElementById('longitudeVolcano').value = volcanoData.longitude || '';
+                    document.getElementById('elevation').value = volcanoData.elevation || '';
+                    document.getElementById('country').value = volcanoData.country || '';
+                    document.getElementById('type').value = volcanoData.type || 'Stratovolcano';
+                    document.getElementById('agent').value = volcanoData.agent || 'Tectonic';
+                    
+                    // Submit the form programmatically
+                    form.dispatchEvent(new Event('submit'));
+                } catch (error) {
+                    console.error('Error processing volcano data:', error);
+                    showResult('Error processing volcano data', true);
+                }
+            });
+
+            // Form submission handler
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                
+                const formData = new FormData(form);
+                const jsonData = {};
+                
+                // Convert form data to JSON
+                formData.forEach((value, key) => {
+                    if (key === 'Year' || key === 'Month' || key === 'Day' || 
+                        key === 'Latitude' || key === 'Longitude' || key === 'Elevation (m)') {
+                        jsonData[key] = parseFloat(value);
+                    } else {
+                        jsonData[key] = value;
+                    }
+                });
+                
+                // Show loading state
+                resultDiv.innerHTML = '<p><strong>Predicting VEI...</strong></p>';
+                resultDiv.className = 'result-box info';
+                resultDiv.style.display = 'block';
+
+                try {
+                    const response = await fetch('/predict-volcano', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(jsonData),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        showResult(`Error: ${data.error}`, true);
+                    } else {
+                        // Handle the prediction response which now includes additional data
+                        const vei = data.prediction.vei;
+                        const veiDisplay = typeof vei === 'number' ? vei.toFixed(1) : vei;
+                        const location = data.prediction.location.country || 'Unknown location';
+                        const volcanoType = data.prediction.volcano_type || 'Unknown type';
+                        
+                        let resultHtml = `
+                            <div class="prediction-result">
+                                <h3>Volcanic Eruption Prediction</h3>
+                                <p><strong>Location:</strong> ${location}</p>
+                                <p><strong>Volcano Type:</strong> ${volcanoType}</p>
+                                <p><strong>Elevation:</strong> ${data.prediction.elevation_m} m</p>
+                                <p><strong>Activity Type:</strong> ${data.prediction.activity_type || 'Not specified'}</p>
+                                <p class="vei-display">
+                                    <strong>Predicted VEI:</strong> 
+                                    <span class="vei-value">${veiDisplay}</span>
+                                </p>
+                                <p class="prediction-date">Prediction date: ${data.prediction.date || 'N/A'}</p>
+                            </div>
+                        `;
+                        
+                        // Add some basic styling for the VEI display
+                        const style = document.createElement('style');
+                        style.textContent = `
+                            .prediction-result {
+                                text-align: left;
+                                padding: 15px;
+                                background: #f8f9fa;
+                                border-radius: 8px;
+                                margin-top: 15px;
+                            }
+                            .vei-display {
+                                font-size: 1.2em;
+                                margin: 15px 0;
+                                padding: 10px;
+                                background: #e9f5ff;
+                                border-radius: 6px;
+                                text-align: center;
+                            }
+                            .vei-value {
+                                font-size: 1.5em;
+                                font-weight: bold;
+                                color: #1a73e8;
+                            }
+                            .prediction-date {
+                                font-size: 0.9em;
+                                color: #666;
+                                text-align: right;
+                                margin-top: 10px;
+                            }
+                        `;
+                        document.head.appendChild(style);
+                        
+                        showResult(resultHtml);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showResult(`Prediction failed: ${error.message}`, true);
+                }
+            });
+            
+            // Initialize with manual input mode
+            toggleInputMode('manual');
+        });
+    </script>
+</body>
+</html>
