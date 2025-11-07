@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_cors import CORS
-from models import predict_live_hurricane, predict_live_volcano, train_hurricane_model, train_volcano_model
+from models import predict_live_hurricane, predict_live_volcano
 from live_data_fetcher import LiveDataFetcher
 import logging
 import requests
@@ -223,7 +223,7 @@ def get_active_volcanoes():
         
         # Format the response
         active_volcanoes = []
-        for volcano in sorted(volcanoes, key=lambda x: x.get('vName', '').lower()):  # Sort alphabetically by name
+        for volcano in sorted(volcanoes, key=lambda x: x.get('vName', '').lower()):
             try:
                 # Get the volcano status from the observatory code
                 obs_code = volcano.get('obsAbbr', '')
@@ -269,7 +269,7 @@ def get_active_volcanoes():
         # Fallback to sample data if the API fails
         current_time = datetime.now(timezone.utc)
         return jsonify({
-            'status': 'success',  # Still return success but with sample data
+            'status': 'success',
             'count': 1,
             'data': [{
                 'id': 'sample-1',
@@ -286,40 +286,6 @@ def get_active_volcanoes():
                 'note': 'Using sample data due to API error'
             }],
             'timestamp': current_time.isoformat(),
-            'data_source': 'Sample Data',
-            'warning': 'Using sample data due to API error',
-            'error': str(e)
-        })
-    except Exception as e:
-        logger.error(f"Unexpected error in get_active_volcanoes: {str(e)}", exc_info=True)
-        return jsonify({
-            'status': 'error',
-            'error': 'An unexpected error occurred',
-            'details': str(e)
-        }), 500
-        
-    except requests.RequestException as e:
-        logger.error(f"Error fetching active volcanoes: {str(e)}")
-        # Fallback to sample data if the API fails
-        return jsonify({
-            'status': 'success',  # Still return success but with sample data
-            'count': 1,
-            'data': [{
-                'id': 'sample-1',
-                'name': 'Sample Volcano',
-                'country': 'Sample Country',
-                'region': 'Sample Region',
-                'latitude': 0,
-                'longitude': 0,
-                'elevation': 0,
-                'type': 'Stratovolcano',
-                'last_eruption': datetime.now(timezone.utc).strftime('%Y-%m-%d'),
-                'status': 'Erupting',
-                'vei': 3,
-                'activity': 'Strombolian activity',
-                'note': 'Sample data - could not fetch live data'
-            }],
-            'timestamp': datetime.now(timezone.utc).isoformat(),
             'data_source': 'Sample Data',
             'warning': 'Using sample data due to API error',
             'error': str(e)
@@ -368,11 +334,19 @@ def volcano_prediction():
             data['Latitude'], data['Longitude'], data['Elevation (m)'],
             data['Country'], data['Type'], data['Agent']
         )
-        return jsonify({'prediction': prediction})
+        return jsonify({
+            'status': 'success',
+            'prediction': prediction,
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        })
 
     except Exception as e:
-        logger.error(f"Error in volcano prediction: {str(e)}")
-        return jsonify({'error': str(e)}), 400
+        logger.error(f"Error in volcano prediction: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        }), 400
 
 
 @app.route('/predict-volcano-live', methods=['POST'])
@@ -381,26 +355,41 @@ def live_volcano_prediction():
     try:
         data = request.get_json(force=True)
         volcano_id = data.get('volcano_id')
+        
+        if not volcano_id:
+            return jsonify({
+                'status': 'error',
+                'error': 'Missing volcano_id parameter',
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            }), 400
+            
         result = predict_live_volcano(volcano_id)
 
         if result['status'] != 'success':
-            return jsonify({'error': result.get('error', 'Unknown error')}), 400
+            return jsonify({
+                'status': 'error',
+                'error': result.get('error', 'Unknown error'),
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            }), 400
 
         return jsonify({
+            'status': 'success',
             'prediction': result['prediction'],
-            'data': result['data'],
+            'data': result.get('data', {}),
+            'volcano': result.get('volcano', {}),
             'data_source': 'USGS/Smithsonian GVP Live Data',
-            'volcano': result['volcano'],
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
     except Exception as e:
-        logger.error(f"Error in live volcano prediction: {str(e)}")
-        return jsonify({'error': str(e)}), 400
+        logger.error(f"Error in live volcano prediction: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'error': str(e),
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        }), 400
 
 
 # ------------------ MAIN ENTRY ------------------
 
 if __name__ == '__main__':
-    train_hurricane_model()
-    train_volcano_model()
     app.run(debug=True)
