@@ -8,16 +8,16 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestRegressor
-from typing import List, Union, Tuple, Optional, Dict, Any
+from typing import List, Union, Optional, Dict, Any
 
 # -------------------------
 # SETUP & HELPER FUNCTIONS
 # -------------------------
 
 def save_artifacts(model: Union[Pipeline, RandomForestRegressor], 
-                   features: List[str], 
-                   prefix: str):
-    """Saves the trained model and feature list to disk."""
+                  features: List[str], 
+                  prefix: str) -> None:
+    """Save trained model and feature list to disk."""
     joblib.dump(model, f"models/{prefix}_model.pkl")
     joblib.dump(features, f"models/{prefix}_features.pkl")
 
@@ -227,7 +227,7 @@ def predict_volcano(year: int, month: int, day: int, latitude: float, longitude:
     # Make prediction
     vei_prediction = round(pipeline.predict(input_df)[0], 1)
     
-    # Return only the data that's available in the dataset
+    # Return prediction with context
     return {
         'vei': vei_prediction,
         'volcano_type': type_str,
@@ -242,24 +242,22 @@ def predict_volcano(year: int, month: int, day: int, latitude: float, longitude:
         },
         'date': f"{year}-{month:02d}-{day:02d}"
     }
-    return float(prediction)
 
 # -------------------------
 # LIVE DATA INTEGRATION FUNCTIONS
 # -------------------------
 
-def setup_and_train_all_models():
-    """Train all models and save them to disk."""
+def setup_and_train_all_models() -> None:
+    """Train and save all models to disk."""
+    logger = logging.getLogger(__name__)
     try:
-        # Train and save hurricane model
+        logger.info("Starting model training...")
         train_hurricane_model()
-        
-        # Train and save volcano model
         train_volcano_model()
-        
-        print("All models trained and saved successfully!")
+        logger.info("All models trained and saved successfully!")
     except Exception as e:
-        print(f"Error training models: {e}")
+        logger.error(f"Error training models: {e}", exc_info=True)
+        raise
 
 def predict_live_hurricane(storm_id: str) -> dict:
     """
@@ -347,7 +345,7 @@ def predict_live_hurricane(storm_id: str) -> dict:
             }
         }
 
-def predict_live_volcano(volcano_id: Optional[str] = None) -> dict:
+def predict_live_volcano(volcano_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Fetch live volcano data and make a prediction.
     
@@ -355,20 +353,16 @@ def predict_live_volcano(volcano_id: Optional[str] = None) -> dict:
         volcano_id: Optional volcano identifier. If None, gets a random active volcano.
         
     Returns:
-        dict: Contains prediction results and metadata
+        dict: Contains prediction results and metadata with status
     """
+    logger = logging.getLogger(__name__)
     try:
         from live_data_fetcher import LiveDataFetcher
-        from datetime import datetime
         
-        # Initialize the data fetcher
+        logger.info(f"Fetching data for volcano: {volcano_id or 'random'}")
         fetcher = LiveDataFetcher()
-        
-        # Get live data
         live_data = fetcher.get_volcano_data(volcano_id)
         
-        # Make prediction
-        current_date = datetime.utcnow()
         prediction = predict_volcano(
             year=live_data['Year'],
             month=live_data['Month'],
@@ -381,15 +375,23 @@ def predict_live_volcano(volcano_id: Optional[str] = None) -> dict:
             agent=live_data['Agent']
         )
         
-        return {
+        result = {
             'prediction': prediction,
             'volcano': live_data.get('Volcano', 'Unknown'),
-            'data': {k: v for k, v in live_data.items() if k not in ['recent_earthquakes', 'data_source', 'timestamp']},
-            'status': 'success'
+            'data': {k: v for k, v in live_data.items() 
+                    if k not in ['recent_earthquakes', 'data_source', 'timestamp']},
+            'status': 'success',
+            'timestamp': datetime.utcnow().isoformat()
         }
         
+        logger.info(f"Successfully predicted for volcano: {result['volcano']}")
+        return result
+        
     except Exception as e:
+        error_msg = f"Error in predict_live_volcano: {str(e)}"
+        logger.error(error_msg, exc_info=True)
         return {
-            'error': str(e),
-            'status': 'error'
+            'status': 'error',
+            'error': error_msg,
+            'timestamp': datetime.utcnow().isoformat()
         }

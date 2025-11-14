@@ -21,27 +21,30 @@ class LiveDataFetcher:
     
     def get_active_storm_names(self) -> List[Dict[str, str]]:
         """
-        Get a lightweight list of active storm names and IDs only.
-        This is much faster than get_active_storms() as it doesn't fetch all storm data.
+        Get a lightweight list of potential storm names and IDs for the current year.
+        This is faster than get_active_storms() as it doesn't fetch all storm data.
         
         Returns:
-            List[Dict[str, str]]: List of active storms with 'id', 'name', 'basin', and 'year'.
+            List[Dict[str, str]]: List of potential storms with 'id', 'name', 'basin', and 'year'.
         """
-        self.logger.info("Fetching active storm names from ATCF...")
+        self.logger.info("Fetching potential storm names from ATCF...")
         
         try:
             current_year = str(datetime.now().year)
+            current_time = datetime.utcnow()
+            
+            # Get all potential storms
+            all_storms = []
             basins = ['al', 'ep']  # Atlantic and East Pacific basins
-            storm_list = []
             
             for basin in basins:
                 try:
-                    # Get the directory listing
+                    # Get the directory listing with a reasonable timeout
                     list_url = "https://ftp.nhc.noaa.gov/atcf/btk/"
-                    response = requests.get(list_url, timeout=10)
+                    response = requests.get(list_url, timeout=15)
                     response.raise_for_status()
                     
-                    # Parse the directory listing to find all files for this basin/year
+                    # Parse the directory listing
                     soup = BeautifulSoup(response.text, 'html.parser')
                     storm_files = [a.text for a in soup.find_all('a') 
                                  if a.text.startswith(f'b{basin}') 
@@ -50,14 +53,13 @@ class LiveDataFetcher:
                     for storm_file in storm_files:
                         try:
                             # Extract storm ID from filename (e.g., bal012025.dat -> AL012025)
-                            storm_id = storm_file[1:-4].upper()  # Remove 'b' and '.dat', make uppercase
-                            
-                            # Add to the list with a placeholder name (will be updated if we can get it)
-                            storm_list.append({
+                            storm_id = storm_file[1:-4].upper()
+                            all_storms.append({
                                 'id': storm_id,
                                 'name': f"Storm {storm_id}",
                                 'basin': storm_id[:2],
-                                'year': storm_id[-4:]
+                                'year': storm_id[-4:],
+                                'last_checked': current_time.isoformat()
                             })
                             
                         except Exception as e:
@@ -71,10 +73,12 @@ class LiveDataFetcher:
                     self.logger.error(f"Unexpected error processing basin {basin}: {e}", exc_info=True)
                     continue
             
-            return storm_list
+            self.logger.info(f"Found {len(all_storms)} potential storms for {current_year}")
+            return all_storms
             
         except Exception as e:
             self.logger.error(f"Error in get_active_storm_names: {e}", exc_info=True)
+            # Return empty list on error to prevent frontend issues
             return []
             
     def get_active_storms(self) -> List[Dict[str, Any]]:
